@@ -6,16 +6,17 @@ import numpy as np
 import matplotlib.pyplot as plt
 from torchvision import transforms
 
-# Import your custom model definition
+# Import the updated ResNet101 model definition
 from model import get_carla_model
 
 # ==========================================
-# Configuration
+# Configuration (Updated for High-Res ResNet101)
 # ==========================================
 TEST_DIR = "./datasets/split_data_by_map/test"
-MODEL_WEIGHTS = "best_carla_model.pth"
+# Ensure this matches the save_path in your train.py
+MODEL_WEIGHTS = "best_carla_model_resnet101_highres.pth" 
 NUM_CLASSES = 29
-IMG_SIZE = (400, 300)
+# Note: IMG_SIZE is completely removed because we are doing inference on the original 800x600 images!
 
 def decode_segmap(image, nc=29):
     """
@@ -53,10 +54,12 @@ def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Running inference on: {device}")
 
-    # 2. Initialize model and load trained weights
+    # 2. Initialize ResNet101 model and load trained high-res weights
+    print(f"Loading model weights from {MODEL_WEIGHTS}...")
     model = get_carla_model(num_classes=NUM_CLASSES)
+    
     if not os.path.exists(MODEL_WEIGHTS):
-        print(f"Error: {MODEL_WEIGHTS} not found. Please train the model first.")
+        print(f"Error: {MODEL_WEIGHTS} not found. Please wait for the training to finish.")
         return
         
     # Load the state dictionary (weights) into the model
@@ -64,7 +67,7 @@ def main():
     model = model.to(device)
     model.eval() # CRITICAL: Set model to evaluation mode
 
-    # 3. Define image transformations (must match training pipeline)
+    # 3. Define standard image transformations (Normalization only, no resizing)
     transform = transforms.Compose([
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.485, 0.456, 0.406], 
@@ -79,38 +82,38 @@ def main():
     # Select 3 random images for visualization
     sample_images = random.sample(all_images, 3)
 
-    # 5. Setup Matplotlib figure
-    fig, axes = plt.subplots(3, 3, figsize=(15, 12))
-    plt.suptitle("CARLA Semantic Segmentation Inference (Test Set - Town10)", fontsize=16)
+    # 5. Setup Matplotlib figure (Increased figsize for high-res images)
+    fig, axes = plt.subplots(3, 3, figsize=(18, 14))
+    plt.suptitle("CARLA High-Resolution Semantic Segmentation (ResNet101 - Town10)", fontsize=18)
 
-    with torch.no_grad(): # No need to track gradients for inference
+    with torch.no_grad(): # Disable gradient calculation to save memory
         for i, img_name in enumerate(sample_images):
-            # --- Load RGB Image ---
+            # --- Load Original High-Res RGB Image ---
             rgb_path = os.path.join(rgb_dir, img_name)
             original_img = cv2.imread(rgb_path)
             original_img = cv2.cvtColor(original_img, cv2.COLOR_BGR2RGB)
-            original_img = cv2.resize(original_img, IMG_SIZE, interpolation=cv2.INTER_LINEAR)
             
-            # --- Load Ground Truth Mask ---
+            # --- Load Original High-Res Ground Truth Mask ---
             mask_path = os.path.join(mask_dir, img_name)
             gt_mask = cv2.imread(mask_path, cv2.IMREAD_GRAYSCALE)
-            gt_mask = cv2.resize(gt_mask, IMG_SIZE, interpolation=cv2.INTER_NEAREST)
-            # Handle out-of-bounds classes by capping them
+            
+            # Handle out-of-bounds classes by mapping them to 0 (Unlabeled) for visualization
             gt_mask[gt_mask >= NUM_CLASSES] = 0 
             
             # --- Model Prediction ---
-            # Prepare tensor
-            input_tensor = transform(original_img).unsqueeze(0).to(device) # Add batch dimension
+            # Prepare tensor and add batch dimension [1, C, H, W]
+            input_tensor = transform(original_img).unsqueeze(0).to(device) 
             
-            # Forward pass
+            # Forward pass through the ResNet101 model
             output = model(input_tensor)['out']
+            
             # Get the class with the highest probability for each pixel
             pred_mask = torch.argmax(output.squeeze(), dim=0).detach().cpu().numpy()
 
             # --- Visualization ---
             # Plot Original Image
             axes[i, 0].imshow(original_img)
-            axes[i, 0].set_title("Original RGB")
+            axes[i, 0].set_title("Original RGB (800x600)")
             axes[i, 0].axis('off')
 
             # Plot Ground Truth (Colorized)
@@ -120,14 +123,14 @@ def main():
 
             # Plot Prediction (Colorized)
             axes[i, 2].imshow(decode_segmap(pred_mask))
-            axes[i, 2].set_title("Model Prediction")
+            axes[i, 2].set_title("ResNet101 Prediction")
             axes[i, 2].axis('off')
 
     plt.tight_layout()
-    # Save the result as an image file so you can view it easily
-    save_path = "inference_results.png"
-    plt.savefig(save_path, bbox_inches='tight')
-    print(f"Inference complete! Visualization saved to {save_path}")
+    # Save the high-res result as an image file
+    save_path = "inference_results_highres.png"
+    plt.savefig(save_path, bbox_inches='tight', dpi=150)
+    print(f"Inference complete! High-resolution visualization saved to {save_path}")
 
 if __name__ == "__main__":
     main()
