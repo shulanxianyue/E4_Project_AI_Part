@@ -12,7 +12,8 @@ from model import get_carla_model
 # Configuration for Evaluation
 # ==========================================
 TEST_DIR = "./datasets/split_data_by_map/test"
-MODEL_WEIGHTS = "best_carla_model_resnet101_highres.pth"
+# MODEL_WEIGHTS = "best_carla_model_resnet101_highres.pth"
+MODEL_WEIGHTS = "best_carla_model_10epoch_weighted.pth"
 NUM_CLASSES = 29
 
 # Standard CARLA semantic class mapping for human-readable reporting
