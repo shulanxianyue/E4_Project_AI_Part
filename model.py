@@ -2,8 +2,8 @@ import torch
 import torch.nn as nn
 from torchvision.models.segmentation import deeplabv3_resnet101, DeepLabV3_ResNet101_Weights
 
-# [MODIFIED] Default num_classes changed to 27
-def get_carla_model(num_classes=27):
+# [MODIFIED] Default num_classes changed to 13
+def get_carla_model(num_classes=13):
     """
     Creates a DeepLabV3 model with a ResNet101 backbone for higher accuracy, 
     adapted for the specific number of classes in CARLA.
@@ -24,8 +24,8 @@ def get_carla_model(num_classes=27):
 # Test the Model architecture
 # ==========================================
 if __name__ == "__main__":
-    # [MODIFIED] Updated to 27
-    NUM_CLASSES = 27 
+    # [MODIFIED] Updated to 13
+    NUM_CLASSES = 13 
     
     print("Building the DeepLabV3-ResNet101 model...")
     model = get_carla_model(num_classes=NUM_CLASSES)
@@ -41,6 +41,6 @@ if __name__ == "__main__":
     predictions = output['out']
     
     print(f"Input shape:  {dummy_input.shape}")
-    # Expected Output shape: [2, 27, 600, 800] -> [Batch, Classes, Height, Width]
+    # Expected Output shape: [2, 13, 600, 800] -> [Batch, Classes, Height, Width]
     print(f"Output shape: {predictions.shape}") 
     print("Everything is working perfectly!")

@@ -16,34 +16,29 @@ DATA_DIR = "./datasets/explicit_map_split"
 BATCH_SIZE = 2           
 LEARNING_RATE = 1e-4     
 NUM_EPOCHS = 20       
-NUM_CLASSES = 27    
+NUM_CLASSES = 13    
 # [NEW] Early Stopping Patience (Stop if Val Loss doesn't improve for 5 consecutive epochs)
 EARLY_STOPPING_PATIENCE = 5     
-
+    
 def get_class_weights(device):
     """
     Highly customized class weights based on the actual mIoU evaluation report.
     Forces the model to focus on 0% classes and ignore easily learned background classes.
     """
     weights = torch.ones(NUM_CLASSES, dtype=torch.float32)
+    weights[3] = 2.0  # Pole
+    weights[4] = 3.0  # TrafficLight
+    weights[5] = 3.0  # TrafficSign
+    weights[8] = 5.0  # Pedestrian
+    weights[9] = 3.0  # Vehicles
+    weights[10] = 3.0 # Two-Wheelers
     
-    weights[12] = 4.0  # Pedestrian 
-    weights[13] = 4.0  # Car        
-    weights[14] = 4.0  # Truck      
-    weights[15] = 4.0  # Bus        
-    weights[7]  = 4.0  # Traffic Light 
-    weights[8]  = 4.0  # Traffic Sign  
-    
-    weights[6]  = 2.0   # Pole       
-    weights[22] = 2.0   # RoadLine   
-    weights[24] = 2.0   # Bridge     
-    
-    weights[1]  = 0.5   # Roads      
-    weights[3]  = 0.5   # Building   
-    weights[9]  = 0.5   # Vegetation 
-    weights[11] = 0.5   # Sky        
-    
-    return weights.to(device)
+    weights[1] = 0.5  # Flat Ground
+    weights[2] = 0.5  # Structures
+    weights[6] = 0.5  # Vegetation
+    weights[7] = 0.2  # Sky
+
+    return weights.to(device)   
 
 def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -142,7 +137,7 @@ def main():
         if avg_val_loss < best_val_loss:
             best_val_loss = avg_val_loss
             patience_counter = 0  # Reset patience since we found a better model
-            save_path = "best_carla_model_27classes_weighted.pth" 
+            save_path = "best_carla_model_13classes_weighted.pth" 
             torch.save(model.state_dict(), save_path)
             print(f"   [!] Val loss improved. Model saved to {save_path}\n")
         else:

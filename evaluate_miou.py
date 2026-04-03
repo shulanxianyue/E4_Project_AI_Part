@@ -10,38 +10,54 @@ from model import get_carla_model
 # ==========================================
 # Configuration for Evaluation
 # ==========================================
-TEST_DIR = "./datasets/explicit_map_split/test"
-MODEL_WEIGHTS = "best_carla_model_27classes_weighted.pth"
-# [MODIFIED] Set to 27 classes!
-NUM_CLASSES = 27
+TEST_DIR = "./datasets/explicit_map_split/test" # Change to 'val' if you are evaluating on validation set
+MODEL_WEIGHTS = "best_carla_model_13classes_weighted.pth" # Update this to your latest 13-class saved model name if different
+NUM_CLASSES = 13
 
-# [MODIFIED] The NEW CARLA Mapping matching the shifted 27 classes
-# Rider (13) and Train (17) are removed. The rest shift upwards.
+# ==========================================
+# [NEW] The 13 Super-Classes Dictionary
+# ==========================================
 CARLA_CLASSES = {
-    0: "Unlabeled", 1: "Roads", 2: "SideWalks", 3: "Building", 4: "Wall",
-    5: "Fence", 6: "Pole", 7: "TrafficLight", 8: "TrafficSign", 9: "Vegetation",
-    10: "Terrain", 11: "Sky", 12: "Pedestrian", 
-    # Notice the shift here:
-    13: "Car", 14: "Truck", 15: "Bus", 
-    # Train is skipped
-    16: "Motorcycle", 17: "Bicycle", 18: "Static", 19: "Dynamic", 
-    20: "Other", 21: "Water", 22: "RoadLine", 23: "Ground", 
-    24: "Bridge", 25: "RailTrack", 26: "GuardRail"
+    0: "Unlabeled", 
+    1: "Flat Ground", 
+    2: "Structures", 
+    3: "Pole", 
+    4: "TrafficLight", 
+    5: "TrafficSign", 
+    6: "Vegetation", 
+    7: "Sky", 
+    8: "Pedestrian", 
+    9: "Vehicles", 
+    10: "Two-Wheelers", 
+    11: "Obstacles", 
+    12: "Water"
 }
 
-# [NEW] The exact same mapping logic from dataset.py to convert disk labels
+# ==========================================
+# [NEW] Ultimate Class Merging Mapping 
+# Transforms raw 0-28 CARLA IDs into 0-12 Super-Class IDs
+# ==========================================
 LABEL_MAPPING = np.full(29, 255, dtype=np.uint8)
-new_id = 0
-for old_id in range(29):
-    if old_id == 13 or old_id == 17:
-        continue
-    LABEL_MAPPING[old_id] = new_id
-    new_id += 1
+LABEL_MAPPING[0] = 0
+LABEL_MAPPING[[1, 2, 10, 24, 25]] = 1      # Flat Ground
+LABEL_MAPPING[[3, 4, 5, 26, 27, 28]] = 2   # Structures
+LABEL_MAPPING[6] = 3                       # Pole
+LABEL_MAPPING[7] = 4                       # TrafficLight
+LABEL_MAPPING[8] = 5                       # TrafficSign
+LABEL_MAPPING[9] = 6                       # Vegetation
+LABEL_MAPPING[11] = 7                      # Sky
+LABEL_MAPPING[12] = 8                      # Pedestrian
+LABEL_MAPPING[[14, 15, 16, 17]] = 9        # Vehicles
+LABEL_MAPPING[[18, 19]] = 10               # Two-Wheelers
+LABEL_MAPPING[[20, 21, 22]] = 11           # Obstacles
+LABEL_MAPPING[23] = 12                     # Water
+# Class 13 (Rider) remains 255
 
 def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"=== Starting mIoU Evaluation on: {device} ===")
 
+    # Initialize model with 13 classes
     model = get_carla_model(num_classes=NUM_CLASSES)
     if not os.path.exists(MODEL_WEIGHTS):
         print(f"Error: {MODEL_WEIGHTS} not found!")
@@ -74,18 +90,19 @@ def main():
             mask_path = os.path.join(mask_dir, img_name)
             gt_mask = cv2.imread(mask_path, cv2.IMREAD_GRAYSCALE)
             
-            # [MODIFIED] Remap the ground truth mask from disk (0-28) to our new (0-26) space
+            # [MODIFIED] Instantly remap 29 classes into 13 super-classes
             gt_mask = LABEL_MAPPING[gt_mask]
             
             input_tensor = transform(original_img).unsqueeze(0).to(device)
             output = model(input_tensor)['out']
             pred_mask = torch.argmax(output.squeeze(), dim=0).detach().cpu().numpy()
 
-            # [MODIFIED] Filter out 255 (the ignored classes)
+            # Filter out ignored pixels (255)
             valid_pixels = gt_mask != 255
             pred_valid = pred_mask[valid_pixels]
             gt_valid = gt_mask[valid_pixels]
 
+            # Calculate Intersection and Union for each valid class
             for cls in range(NUM_CLASSES):
                 p = (pred_valid == cls)
                 t = (gt_valid == cls)
