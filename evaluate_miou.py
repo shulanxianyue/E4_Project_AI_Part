@@ -11,7 +11,7 @@ from model import get_carla_model
 # Configuration for Evaluation
 # ==========================================
 TEST_DIR = "./datasets/explicit_map_split/test" 
-MODEL_WEIGHTS = "best_carla_model_14classes_weighted.pth" 
+MODEL_WEIGHTS = "best_carla_model_13classes_weighted.pth" 
 NUM_CLASSES = 13
 
 # ==========================================

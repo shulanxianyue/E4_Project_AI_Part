@@ -16,34 +16,33 @@ DATA_DIR = "./datasets/explicit_map_split"
 BATCH_SIZE = 2           
 LEARNING_RATE = 1e-4     
 NUM_EPOCHS = 20       
-NUM_CLASSES = 14    # [MODIFIED] Updated to 14 classes
+NUM_CLASSES = 13    # [MODIFIED] Updated to 13 classes
 EARLY_STOPPING_PATIENCE = 5     
     
 def get_class_weights(device):
     """
-    Highly customized class weights based on the 14-class autonomous driving scheme.
+    Highly customized class weights based on the 13-class autonomous driving scheme.
     Prioritizes drivable areas, dynamic objects, and traffic signals.
     """
     weights = torch.ones(NUM_CLASSES, dtype=torch.float32)
     
     # --- High Priority: Dynamic & Safety Critical (Weight x3 ~ x5) ---
-    weights[6] = 5.0  # Pedestrian
+    weights[5] = 5.0  # Pedestrian
     weights[4] = 3.0  # Vehicles
-    weights[5] = 4.0  # Two-Wheelers
-    weights[7] = 4.0  # TrafficLight
-    weights[8] = 4.0  # TrafficSign
+    weights[6] = 4.0  # TrafficLight
+    weights[7] = 4.0  # TrafficSign
     weights[3] = 4.0  # RoadLine
     
     # --- Medium Priority (Weight x1.0) ---
-    weights[9] = 1.0  # Pole
-    weights[13] = 1.0 # Obstacles/Misc
+    weights[8] = 1.0  # Pole
+    weights[12] = 1.0 # Obstacles/Misc
     
     # --- Low Priority: Massive Backgrounds (Weight < 0.5) ---
     weights[1] = 0.5  # Road
     weights[2] = 0.5  # Sidewalk
-    weights[10] = 0.5 # Structures
-    weights[11] = 0.5 # Nature/Terrain
-    weights[12] = 0.2 # Sky
+    weights[9] = 0.5 # Structures
+    weights[10] = 0.5 # Nature/Terrain
+    weights[11] = 0.2 # Sky
     
     return weights.to(device)
 
@@ -139,7 +138,7 @@ def main():
         if avg_val_loss < best_val_loss:
             best_val_loss = avg_val_loss
             patience_counter = 0  
-            save_path = "best_carla_model_14classes_weighted.pth"  # [MODIFIED] Save name updated
+            save_path = "best_carla_model_13classes_weighted.pth"  # [MODIFIED] Save name updated
             torch.save(model.state_dict(), save_path)
             print(f"   [!] Val loss improved. Model saved to {save_path}\n")
         else:
@@ -163,7 +162,7 @@ def main():
     plt.plot(epochs_range, history_train_loss, 'b-', label='Training Loss', linewidth=2)
     plt.plot(epochs_range, history_val_loss, 'r-', label='Validation Loss', linewidth=2)
     
-    plt.title('Training and Validation Loss Curve (14 Classes)', fontsize=16)
+    plt.title('Training and Validation Loss Curve (13 Classes)', fontsize=16)
     plt.xlabel('Epochs', fontsize=14)
     plt.ylabel('Loss', fontsize=14)
     plt.xticks(epochs_range)
