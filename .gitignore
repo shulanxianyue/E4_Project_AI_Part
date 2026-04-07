@@ -16,3 +16,10 @@ __pycache__/
 
 # 5. 操作系统自动生成的隐藏文件
 .DS_Store
+
+# 6. pictures
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.webp

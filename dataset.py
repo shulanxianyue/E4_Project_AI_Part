@@ -8,54 +8,42 @@ import torchvision.transforms.functional as TF
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
 
-# [ULTIMATE] Super-Class Merging Table (13 Classes)
+import numpy as np
+
 # ==========================================
-# 0: Unlabeled
-# 1: Flat Ground (Road, Sidewalk, Terrain, RoadLine, Ground)
-# 2: Structures (Building, Wall, Fence, Bridge, GuardRail, RailTrack)
-# 3: Pole
-# 4: TrafficLight
-# 5: TrafficSign
-# 6: Vegetation
-# 7: Sky
-# 8: Pedestrian
-# 9: Vehicles (Car, Truck, Bus, Train)
-# 10: Two-Wheelers (Motorcycle, Bicycle)
-# 11: Obstacles (Static, Dynamic, Other)
-# 12: Water
+# [AD-Focused] 13 Classes Mapping
+# ==========================================
+CARLA_CLASSES = {
+    0: "Unlabeled", 
+    1: "Road", 
+    2: "Sidewalk", 
+    3: "RoadLine", 
+    4: "Vehicles/Agents", 
+    5: "Pedestrian", 
+    6: "TrafficLight", 
+    7: "TrafficSign", 
+    8: "Pole", 
+    9: "Structures", 
+    10: "Nature/Terrain", 
+    11: "Sky", 
+    12: "Obstacles/Misc"
+}
 
 LABEL_MAPPING = np.full(29, 255, dtype=np.uint8)
 
-# 0: Unlabeled 
-LABEL_MAPPING[0] = 0
-
-# 1: Flat Ground 
-LABEL_MAPPING[[1, 2, 10, 24, 25]] = 1
-
-# 2: Structures 
-LABEL_MAPPING[[3, 4, 5, 26, 27, 28]] = 2
-
-# Core individual classes
-LABEL_MAPPING[6] = 3   # Pole
-LABEL_MAPPING[7] = 4   # TrafficLight
-LABEL_MAPPING[8] = 5   # TrafficSign
-LABEL_MAPPING[9] = 6   # Vegetation
-LABEL_MAPPING[11] = 7  # Sky
-LABEL_MAPPING[12] = 8  # Pedestrian
-
-# 9: Vehicles
-LABEL_MAPPING[[14, 15, 16, 17]] = 9
-
-# 10: Two-Wheelers
-LABEL_MAPPING[[18, 19]] = 10
-
-# 11: Obstacles
-LABEL_MAPPING[[20, 21, 22]] = 11
-
-# 12: Water
-LABEL_MAPPING[23] = 12
-
-# 13 (Rider) is left as 255 (Ignored)
+LABEL_MAPPING[0] = 0                           # Unlabeled
+LABEL_MAPPING[1] = 1                           # Roads
+LABEL_MAPPING[2] = 2                           # SideWalks
+LABEL_MAPPING[24] = 3                          # RoadLine
+LABEL_MAPPING[[14, 15, 16, 18, 19]] = 4        # Vehicles/Agents (Car, Truck, Bus, otorcycle, Bicycle)
+LABEL_MAPPING[12] = 5                          # Pedestrian
+LABEL_MAPPING[7] = 6                           # TrafficLight
+LABEL_MAPPING[8] = 7                           # TrafficSign
+LABEL_MAPPING[6] = 8                           # Pole
+LABEL_MAPPING[[3, 4, 5, 26, 27, 28]] = 9      # Structures (Building, Wall, Fence, Bridge, RailTrack, GuardRail)
+LABEL_MAPPING[[9, 10, 25]] = 10                # Nature/Terrain (Vegetation, Terrain, Ground)
+LABEL_MAPPING[11] = 11                         # Sky
+LABEL_MAPPING[[20, 21, 22, 23]] = 12           # Obstacles/Misc (Static, Dynamic, Other, Water)
 
 class CarlaSegmentationDataset(Dataset):
     """

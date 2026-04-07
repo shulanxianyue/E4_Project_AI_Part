@@ -24,7 +24,6 @@ def get_carla_model(num_classes=13):
 # Test the Model architecture
 # ==========================================
 if __name__ == "__main__":
-    # [MODIFIED] Updated to 13
     NUM_CLASSES = 13 
     
     print("Building the DeepLabV3-ResNet101 model...")
