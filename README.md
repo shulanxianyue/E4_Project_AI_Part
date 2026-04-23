@@ -86,7 +86,7 @@ E4_Project_AI_Part/
 
 | Requirement | Version |
 |-------------|---------|
-| ROS 2 | Humble (recommended) |
+| ROS 2 | Jazzy |
 | cv_bridge | — |
 | rclpy | — |
 
@@ -300,7 +300,6 @@ The model is **resolution-agnostic** — it has been tested at both 800×600 (tr
 | Final training loss | ~0.10 |
 
 ![Loss Curve](loss_curve.png)
-![Inference Results](inference_results_13classes.png)
 
 ---
 
